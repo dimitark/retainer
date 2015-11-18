@@ -1,10 +1,5 @@
 package si.dime.android.retainer;
 
-import android.app.Activity;
-
-import java.util.HashMap;
-import java.util.Map;
-
 import si.dime.android.retainer.lifecycle.ActivityBinder;
 import si.dime.android.retainer.lifecycle.PureActivityBinder;
 import si.dime.android.retainer.lifecycle.ReflectionActivityBinder;
@@ -22,9 +17,6 @@ public class BucketsManager {
 
     // The app wide bucket. Can be null if the user doesn't enable it
     final Bucket appBucket;
-
-    // The buckets bind to the activities
-    private final Map<Activity, Bucket> activityBuckets = new HashMap<>();
 
     // The lifecycle binder
     private final ActivityBinder binder;

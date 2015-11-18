@@ -18,14 +18,14 @@ public class Bucket {
      * Called when the owner of this bucket is destroyed.
      * Here the bucket releases any references pointing to the owner
      */
-    protected void onOwnerDestroyed() {
+    public void onOwnerDestroyed() {
 
     }
 
     /**
      * Destroys the bucket
      */
-    protected void destroy() {
+    public void destroy() {
 
     }
 

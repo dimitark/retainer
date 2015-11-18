@@ -13,10 +13,4 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = ElementType.TYPE)
 public @interface EnableRetainer {
-    /**
-     * Should the retainer retain the bucket on configuration change?
-     *
-     * @return
-     */
-    boolean retainOnConfigChange() default true;
 }
