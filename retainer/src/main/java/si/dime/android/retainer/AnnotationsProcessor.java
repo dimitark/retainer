@@ -1,4 +1,4 @@
-package si.dime.android.retainer.internal;
+package si.dime.android.retainer;
 
 import android.content.pm.ActivityInfo;
 

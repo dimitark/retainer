@@ -5,8 +5,6 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
-import si.dime.android.retainer.internal.AnnotationsProcessor;
-
 /**
  * The Retainer's entry point
  *
@@ -28,14 +26,8 @@ public class Retainer {
     // region Class fields
     //
 
-    // The application
-    private Application app;
-
-    // Should we initialize an app wide bucket?
-    private boolean appBucket;
-
-    // The annotation processor. Null in case the user doesn't enable any annotations feature
-    private AnnotationsProcessor annotationsProcessor;
+    // The Buckets manager
+    private BucketsManager bucketsManager;
 
     //
     // endregion Class fields
@@ -59,17 +51,16 @@ public class Retainer {
      * @param builder
      */
     private Retainer(Builder builder) {
-        // Save the references
-        this.app = builder.app;
-        this.appBucket = builder.appBucket;
-
+        // The annotation processor. Null in case the user doesn't enable any annotations feature
+        AnnotationsProcessor annotationsProcessor = null;
         // Should we initialise the annotation processor?
         if (builder.autoDiscoverActivities || builder.bucketInjection || builder.autoRegisterHandlers) {
             // Do we need the list of activities?
             ActivityInfo[] activitiesInfo = null;
             if (builder.autoDiscoverActivities) {
                 try {
-                    activitiesInfo = app.getPackageManager().getPackageInfo(app.getPackageName(), PackageManager.GET_ACTIVITIES).activities;
+                    activitiesInfo = builder.app.getPackageManager().getPackageInfo(
+                            builder.app.getPackageName(), PackageManager.GET_ACTIVITIES).activities;
                 } catch (PackageManager.NameNotFoundException e) {
                     // Should not come to this
                     Log.e(LOG_TAG, "Could not get info about the activities! Activity auto discovery may not work!", e);
@@ -82,10 +73,32 @@ public class Retainer {
                     builder.autoRegisterHandlers,
                     activitiesInfo);
         }
+
+        // Initialize the buckets manager
+        bucketsManager = new BucketsManager(builder.appBucket, annotationsProcessor);
+        // Register the buckets manager as listener to the Activities callbacks
+        builder.app.registerActivityLifecycleCallbacks(bucketsManager.getActivityBinder());
     }
 
     //
     // endregion Constructors
+    //
+
+    //
+    // region Public methods
+    //
+
+    /**
+     * Returns the app bucket. Null if it wasn't enabled.
+     *
+     * @return
+     */
+    public Bucket getAppBucket() {
+        return bucketsManager.appBucket;
+    }
+
+    //
+    // endregion Public methods
     //
 
     //
