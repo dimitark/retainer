@@ -126,7 +126,7 @@ public class Bucket {
      *      true - if the subscriber gets called from within this method
      *      false - otherwise
      */
-    public boolean requestImmidiateData(String key) {
+    public boolean requestImmediateData(String key) {
         return requestData(key, false, true);
     }
 
