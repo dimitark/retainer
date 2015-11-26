@@ -1,5 +1,8 @@
 package si.dime.android.retainer;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -91,15 +94,97 @@ public class Bucket {
         return running.contains(key);
     }
 
+
+    /**
+     * Requests the data for the given key. If the data exists, the corresponding subscriber will be
+     * called on the end of the event loop (within the same Thread that this method was called on).
+     *
+     * @param key
+     */
+    public void requestData(String key) {
+        requestData(key, false, false);
+    }
+
+    /**
+     * Requests refreshed data for the given key.
+     * If the data already exists, it will be removed and the observable will be called once again.
+     * If there is a running observable - it will be canceled.
+     *
+     * @param key
+     */
+    public void requestRefreshedData(String key) {
+        requestData(key, true, false);
+    }
+
+
+    /**
+     * Requests the data. If it already exists, the subscriber will be called from within this method.
+     * If not - a new request will be made, and the subscriber will be called once the observable calls onComplete()
+     * or onError().
+     *
+     * @param key
+     * @return
+     *      true - if the subscriber gets called from within this method
+     *      false - otherwise
+     */
+    public boolean requestImmidiateData(String key) {
+        return requestData(key, false, true);
+    }
+
+    //
+    // endregion Get data methods
+    //
+
+    //
+    // region Destroy methods
+    //
+
+    /**
+     * Called when the owner of this bucket is destroyed.
+     * Here the bucket releases any references pointing to the owner
+     */
+    public void onOwnerDestroyed() {
+        // Clear all the handlers
+        handlers.clear();
+    }
+
+    /**
+     * Destroys the bucket
+     */
+    public void destroy() {
+        // Clear the handlers
+        onOwnerDestroyed();
+
+        // Unsubscribe all running observables
+        subscriptions.clear();
+        compositeSubscription.unsubscribe();
+    }
+
+    //
+    // endregion Destroy methods
+    //
+
+
+    //
+    // region Private methods
+    //
+
     /**
      * Requests the data for the given key. The result will be delivered to the registered subscriber.
-     * If the data is fetched, the data will be delivered immediately. Otherwise - after the
-     * registered observable finishes.
+     *
+     * If the data is already fetched, the subscriber will be called immediately (from within this method) if and only if
+     * the runImmediately param is set to true. If the param is set to false, the subscriber will be called
+     * at the end of the event queue in the same Thread.
+     *
+     * Otherwise - after the registered observable finishes.
      *
      * @param key
      *      The key
      * @param forceRefresh
      *      If this is true - the data will be refreshed even if we have it cached
+     * @param runImmediately
+     *      If set to true & the data is already available - the subscriber will be called from within this method
+     *      If false - the subscriber will be called at the end of the event queue in the same Thread.
      * @throws IllegalStateException
      *      If the user request a key that doesn't exist
      *
@@ -107,9 +192,9 @@ public class Bucket {
      *      true - if the data was already emitted to the subscriber from within this method
      *      false - if the data will be emitted sometime in the future
      */
-    public boolean requestData(String key, boolean forceRefresh) {
+    private boolean requestData(String key, boolean forceRefresh, boolean runImmediately) {
         // Get the handler
-        DataHandler dataHandler = handlers.get(key);
+        final DataHandler dataHandler = handlers.get(key);
 
         // Check if the key is registered
         if (dataHandler == null) {
@@ -119,22 +204,52 @@ public class Bucket {
         // Check if we have data for the key (if needed)
         if (!forceRefresh) {
             // Check for success data
-            List successData = data.get(key);
+            final List successData = data.get(key);
             if (successData != null) {
-                // Emit the elements to the subscriber
-                for (Object obj : successData) {
-                    dataHandler.subscriber.onNext(obj);
+                // The Runnable
+                final Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        // Emit the elements to the subscriber
+                        for (Object obj : successData) {
+                            dataHandler.subscriber.onNext(obj);
+                        }
+                        // Finish the emission
+                        dataHandler.subscriber.onCompleted();
+                    }
+                };
+
+                // Check when the user want us to call the subscriber
+                if (runImmediately) {
+                    runnable.run();
+                } else {
+                    new Handler(Looper.myLooper()).post(runnable);
                 }
-                // Finish the emission
-                dataHandler.subscriber.onCompleted();
+
+                // Inform that we already have the data
                 return true;
             }
 
             // Check for error data
-            Throwable error = errors.get(key);
+            final Throwable error = errors.get(key);
             if (error != null) {
-                // Emit the error
-                dataHandler.subscriber.onError(error);
+                // The runnable
+                final Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        // Emit the error
+                        dataHandler.subscriber.onError(error);
+                    }
+                };
+
+                // Check when the user want us to call the subscriber
+                if (runImmediately) {
+                    runnable.run();
+                } else {
+                    new Handler(Looper.myLooper()).post(runnable);
+                }
+
+                // Inform that we already have the data
                 return true;
             }
         } else {
@@ -221,38 +336,7 @@ public class Bucket {
     }
 
     //
-    // endregion Get data methods
-    //
-
-
-
-    //
-    // region Destroy methods
-    //
-
-    /**
-     * Called when the owner of this bucket is destroyed.
-     * Here the bucket releases any references pointing to the owner
-     */
-    public void onOwnerDestroyed() {
-        // Clear all the handlers
-        handlers.clear();
-    }
-
-    /**
-     * Destroys the bucket
-     */
-    public void destroy() {
-        // Clear the handlers
-        onOwnerDestroyed();
-
-        // Unsubscribe all running observables
-        subscriptions.clear();
-        compositeSubscription.unsubscribe();
-    }
-
-    //
-    // endregion Destroy methods
+    // endregion Private methods
     //
     
     //
