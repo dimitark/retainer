@@ -22,10 +22,10 @@ public class BucketsManager {
     //
 
     // The app wide bucket. Can be null if the user doesn't enable it
-    final Bucket appBucket;
+    protected final Bucket appBucket;
 
     // The lifecycle binder
-    private final ActivityBinder binder;
+    protected final ActivityBinder binder;
 
     //
     // endregion Class fields

@@ -66,6 +66,24 @@ public abstract class ActivityBinder implements Application.ActivityLifecycleCal
     //
     // endregion Constructors
     //
+    
+    //
+    // region Get methods
+    //
+
+    /**
+     * Returns the bucket for the activity. Null if no such bucket.
+     *
+     * @param activity
+     * @return
+     */
+    public Bucket getBucket(Activity activity) {
+        return buckets.get(activity);
+    }
+    
+    //
+    // endregion Get methods
+    //
 
     //
     // region ActivityLifecycleCallbacks

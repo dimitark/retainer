@@ -103,6 +103,17 @@ public class Retainer {
         return bucketsManager.appBucket;
     }
 
+    /**
+     * Returns the bucket for the given activity.
+     * Null if the activity is not registered.
+     *
+     * @param activity
+     * @return
+     */
+    public Bucket getBucket(Activity activity) {
+        return bucketsManager.binder.getBucket(activity);
+    }
+
     //
     // endregion Public methods
     //
