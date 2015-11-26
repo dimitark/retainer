@@ -1,5 +1,11 @@
 package si.dime.android.retainer;
 
+import android.app.Activity;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
 import si.dime.android.retainer.lifecycle.ActivityBinder;
 import si.dime.android.retainer.lifecycle.PureActivityBinder;
 import si.dime.android.retainer.lifecycle.ReflectionActivityBinder;
@@ -35,12 +41,21 @@ public class BucketsManager {
      * @param appBucketEnabled
      * @param annotationsProcessor
      */
-    public BucketsManager(boolean appBucketEnabled, AnnotationsProcessor annotationsProcessor) {
+    public BucketsManager(boolean appBucketEnabled, Set<Class<? extends Activity>> activities, AnnotationsProcessor annotationsProcessor) {
         // Did the user enable the app bucket?
         appBucket = appBucketEnabled ? new Bucket() : null;
 
-        // Init the right binder
-        binder = annotationsProcessor == null ? new PureActivityBinder() : new ReflectionActivityBinder();
+        // Check if we have enabled annotations
+        if (annotationsProcessor != null) {
+            // Initialize the Reflection Activity Binder
+            binder = new ReflectionActivityBinder(annotationsProcessor.autoDiscoverActivities
+                    ? annotationsProcessor.getActivities()
+                    : activities);
+        }
+        // Otherwise - we have the 'pure' mode
+        else {
+            binder = new PureActivityBinder(activities);
+        }
     }
 
     //

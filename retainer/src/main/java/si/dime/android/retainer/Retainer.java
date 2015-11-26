@@ -1,9 +1,15 @@
 package si.dime.android.retainer;
 
+import android.app.Activity;
 import android.app.Application;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * The Retainer's entry point
@@ -75,7 +81,7 @@ public class Retainer {
         }
 
         // Initialize the buckets manager
-        bucketsManager = new BucketsManager(builder.appBucket, annotationsProcessor);
+        bucketsManager = new BucketsManager(builder.appBucket, builder.activities, annotationsProcessor);
         // Register the buckets manager as listener to the Activities callbacks
         builder.app.registerActivityLifecycleCallbacks(bucketsManager.getActivityBinder());
     }
@@ -132,6 +138,10 @@ public class Retainer {
         // Should we initialize an app wide bucket?
         // Default = false
         private boolean appBucket;
+
+        // The set of the registered activities
+        // Ignored if auto discovery is enabled!
+        private final Set<Class<? extends Activity>> activities = new HashSet<>();
         
         //
         // endregion Class fields
@@ -189,6 +199,19 @@ public class Retainer {
         @SuppressWarnings("unused")
         public Builder enableAppBucket() {
             this.appBucket = true;
+            return this;
+        }
+
+        /**
+         * Registers the given activity for retention.
+         * This call is ignored if the Activity Auto Discovery is enabled.
+         *
+         * @param activityClass
+         * @return
+         */
+        @SuppressWarnings("unused")
+        public Builder registerActivity(Class<? extends Activity> activityClass) {
+            activities.add(activityClass);
             return this;
         }
 

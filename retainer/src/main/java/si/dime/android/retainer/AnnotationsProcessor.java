@@ -1,6 +1,12 @@
 package si.dime.android.retainer;
 
+import android.app.Activity;
 import android.content.pm.ActivityInfo;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Processes the annotations
@@ -13,7 +19,7 @@ public class AnnotationsProcessor {
     //
 
     // Should we auto-discover the Activities that need the retainer, by scanning for the appropriate annotation?
-    private final boolean autoDiscoverActivities;
+    final boolean autoDiscoverActivities;
 
     // Should we inject the bucket in the Activity, by scanning for the inject annotation?
     private final boolean bucketInjection;
@@ -23,6 +29,9 @@ public class AnnotationsProcessor {
 
     // The info of all activities
     private final ActivityInfo[] activitiesInfo;
+
+    // The registered activities
+    private final Set<Class<? extends Activity>> registeredActivities = new HashSet<>();
 
     //
     // endregion Class fields
@@ -53,6 +62,23 @@ public class AnnotationsProcessor {
 
     //
     // endregion Constructors
+    //
+    
+    
+    //
+    // region Get methods
+    //
+
+    /**
+     * Returns a list of activities that have the @EnableRetainer annotation.
+     * @return
+     */
+    protected Set<Class<? extends Activity>> getActivities() {
+        return registeredActivities;
+    }
+    
+    //
+    // endregion Get methods
     //
 
 }

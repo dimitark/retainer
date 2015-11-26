@@ -4,8 +4,11 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import si.dime.android.retainer.Bucket;
 
@@ -16,6 +19,9 @@ public abstract class ActivityBinder implements Application.ActivityLifecycleCal
     //
     // region Class fields
     //
+
+    // The list of the registered activities
+    protected final Set<Class<? extends Activity>> activities;
 
     // The buckets
     private final Map<Activity, Bucket> buckets = new HashMap<>();
@@ -28,16 +34,72 @@ public abstract class ActivityBinder implements Application.ActivityLifecycleCal
     //
 
     //
+    // region Abstract method definitions
+    //
+
+    /**
+     * Called at the end of the onActivityCreated(...) method.
+     *
+     * @param activity
+     * @param bucket
+     */
+    protected abstract void postOnActivityCreated(Activity activity, Bucket bucket);
+
+    //
+    // endregion Abstract method definitions
+    //
+
+    //
+    // region Constructors
+    //
+
+    /**
+     * Default constructor
+     *
+     * @param activities
+     */
+    public ActivityBinder(Set<Class<? extends Activity>> activities) {
+        // Save the activities
+        this.activities = activities;
+    }
+
+    //
+    // endregion Constructors
+    //
+
+    //
     // region ActivityLifecycleCallbacks
     //
 
     @Override
-    public void onActivityCreated(Activity activity, Bundle bundle) {
+    public final void onActivityCreated(Activity activity, Bundle bundle) {
+        // Does the activity has enabled the retainer?
+        if (!activities.contains(activity.getClass())) {
+            return;
+        }
 
+        // The Bucket
+        Bucket bucket;
+
+        // Is a config change recreation?
+        if (buckedInTheMiddleOfAConfigChange != null) {
+            bucket = buckedInTheMiddleOfAConfigChange;
+            buckedInTheMiddleOfAConfigChange = null;
+        }
+        // If not - create new bucket
+        else {
+            bucket = new Bucket();
+        }
+
+        // Bind the bucket to this activity
+        buckets.put(activity, bucket);
+
+        // Delegate
+        postOnActivityCreated(activity, bucket);
     }
 
     @Override
-    public void onActivityDestroyed(Activity activity) {
+    public final void onActivityDestroyed(Activity activity) {
         // Check if we have a bucket for this activity
         Bucket bucket = buckets.get(activity);
         if (bucket == null) {

@@ -60,16 +60,15 @@ public class Bucket {
 
     /**
      * Registers the given data handler with the given key.
+     * Does nothing if there is a handler already registered for the given key.
      *
      * @param key
      * @param dataHandler
-     * @throws IllegalStateException
-     *              If such key already exist
      */
     public void registerDataHandler(String key, DataHandler dataHandler) {
         // Check if the key already exists
         if (handlers.containsKey(key)) {
-            throw new IllegalStateException("The key " + key + " already exists!");
+            return;
         }
 
         // Just register the data handler
