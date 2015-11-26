@@ -301,6 +301,7 @@ public class Bucket {
                 subscriptions.remove(key);
 
                 // Save the throwable
+                data.remove(key);
                 errors.put(key, e);
 
                 // Inform the actual subscriber (if any)
