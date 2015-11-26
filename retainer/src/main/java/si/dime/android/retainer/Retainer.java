@@ -77,7 +77,8 @@ public class Retainer {
                     builder.autoDiscoverActivities,
                     builder.bucketInjection,
                     builder.autoRegisterHandlers,
-                    activitiesInfo);
+                    activitiesInfo,
+                    builder.activities);
         }
 
         // Initialize the buckets manager

@@ -48,9 +48,7 @@ public class BucketsManager {
         // Check if we have enabled annotations
         if (annotationsProcessor != null) {
             // Initialize the Reflection Activity Binder
-            binder = new ReflectionActivityBinder(annotationsProcessor.autoDiscoverActivities
-                    ? annotationsProcessor.getActivities()
-                    : activities);
+            binder = new ReflectionActivityBinder(annotationsProcessor, appBucket);
         }
         // Otherwise - we have the 'pure' mode
         else {
