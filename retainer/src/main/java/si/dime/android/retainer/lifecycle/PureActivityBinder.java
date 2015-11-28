@@ -2,7 +2,6 @@ package si.dime.android.retainer.lifecycle;
 
 import android.app.Activity;
 
-import java.util.List;
 import java.util.Set;
 
 import si.dime.android.retainer.Bucket;

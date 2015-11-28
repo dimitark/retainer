@@ -135,6 +135,58 @@ public class Bucket {
     //
 
     //
+    // region Remove methods
+    //
+
+    /**
+     * Cancels the running request for the given key (if any)
+     *
+     * @param key
+     */
+    public void cancelRequest(String key) {
+        // Sanity check
+        if (!isRunning(key)) {
+            return;
+        }
+
+        // Get the subscriber and unsubscribe
+        subscriptions.get(key).unsubscribe(); // Cannot be null at this moment
+        // Mark it as not-running
+        running.remove(key);
+    }
+
+    /**
+     * Removes any existing data for the given key
+     *
+     * @param key
+     */
+    public void removeData(String key) {
+        // Remove any existing data
+        data.remove(key);
+        errors.remove(key);
+    }
+
+    /**
+     * Unregisters the key, removes any existing data and cancels the current running observables (if any).
+     *
+     * @param key
+     */
+    public void unregisterKey(String key) {
+        // Cancel if running
+        cancelRequest(key);
+
+        // Remove the data
+        removeData(key);
+
+        // Unregister
+        handlers.remove(key);
+    }
+
+    //
+    // endregion Remove methods
+    //
+
+    //
     // region Destroy methods
     //
 
