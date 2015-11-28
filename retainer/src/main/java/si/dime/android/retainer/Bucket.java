@@ -98,10 +98,14 @@ public class Bucket {
      * Requests the data for the given key. If the data exists, the corresponding subscriber will be
      * called on the end of the event loop (within the same Thread that this method was called on).
      *
+     * @return
+     *      true - if the data already exists and the subscriber will be called on the end of this event loop
+     *      false - otherwise
+     *
      * @param key
      */
-    public void requestData(String key) {
-        requestData(key, false, false);
+    public boolean requestData(String key) {
+        return requestData(key, false, false);
     }
 
     /**
