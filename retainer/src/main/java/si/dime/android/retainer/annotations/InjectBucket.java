@@ -14,16 +14,16 @@ import java.lang.annotation.Target;
 @Target(value = ElementType.FIELD)
 public @interface InjectBucket {
     /**
-     * Tells to who this bucket is bind? The activity in which is defined or the application?
+     * Tells the scope of this bucket. The activity in which is defined or the application?
      *
      * @return
      */
-    Binder bindTo() default Binder.ACTIVITY;
+    Scope bindTo() default Scope.ACTIVITY;
 
     /**
-     * Indicates who is the binder for this Bucket
+     * The scope of the bucket (Activity or App)
      */
-    enum Binder {
+    enum Scope {
         ACTIVITY, APP
     }
 }
