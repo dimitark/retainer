@@ -1,25 +1,25 @@
 package si.dime.android.retainer;
 
-import android.app.Activity;
-import android.app.Application;
-import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import si.dime.android.retainer.managers.FragActivityBucketManager;
+import si.dime.android.retainer.managers.SupportFragBucketManager;
 
 /**
- * The Retainer's entry point
+ * The Retainer's entry point. Singleton.
  *
- * Created by dime on 18/11/15.
+ * Created by dime on 29/11/15.
  */
+@SuppressWarnings("unused")
 public class Retainer {
+
     //
     // region Static fields
     //
+
+    // The singleton instance
+    private static final Retainer INSTANCE = new Retainer();
 
     // The log tag
     public static final String LOG_TAG = "Retainer";
@@ -32,213 +32,118 @@ public class Retainer {
     // region Class fields
     //
 
-    // The Buckets manager
-    private BucketsManager bucketsManager;
+    // The bucket managers
+    private BucketManager supportFragBucketManager;
+    private BucketManager fragActivityBucketManager;
 
     //
     // endregion Class fields
     //
 
     //
-    // region Constructors
+    // region Singleton pattern
     //
 
     /**
-     * No args constructor
+     * Private constructor
      */
-    @SuppressWarnings("unused")
     private Retainer() {
-        // Don't allow construction without the Builder
-    }
+        // Initialize the bucket managers
+        // TODO
 
-    /**
-     * Default constructor
-     *
-     * @param builder
-     */
-    private Retainer(Builder builder) {
-        // The annotation processor. Null in case the user doesn't enable any annotations feature
-        AnnotationsProcessor annotationsProcessor = null;
-        // Should we initialise the annotation processor?
-        if (builder.autoDiscoverActivities || builder.bucketInjection || builder.autoRegisterHandlers) {
-            // Do we need the list of activities?
-            ActivityInfo[] activitiesInfo = null;
-            if (builder.autoDiscoverActivities) {
-                try {
-                    activitiesInfo = builder.app.getPackageManager().getPackageInfo(
-                            builder.app.getPackageName(), PackageManager.GET_ACTIVITIES).activities;
-                } catch (PackageManager.NameNotFoundException e) {
-                    // Should not come to this
-                    Log.e(LOG_TAG, "Could not get info about the activities! Activity auto discovery may not work!", e);
-                }
-            }
-            // Init the annotations processor
-            annotationsProcessor = new AnnotationsProcessor(
-                    builder.autoDiscoverActivities,
-                    builder.bucketInjection,
-                    builder.autoRegisterHandlers,
-                    activitiesInfo,
-                    builder.activities);
+        // Initialize the support bucket managers if the support library is included
+        try {
+            // Check if the support library is available
+            Class.forName("android.support.v4.app.Fragment");
+
+            // Init the bucket managers
+            supportFragBucketManager = new SupportFragBucketManager();
+            fragActivityBucketManager = new FragActivityBucketManager();
+        } catch (ClassNotFoundException e) {
+            Log.d(Retainer.LOG_TAG, "The support library is not included in the project.");
         }
-
-        // Initialize the buckets manager
-        bucketsManager = new BucketsManager(builder.appBucket, builder.activities, annotationsProcessor);
-        // Register the buckets manager as listener to the Activities callbacks
-        builder.app.registerActivityLifecycleCallbacks(bucketsManager.getActivityBinder());
     }
 
-    //
-    // endregion Constructors
-    //
-
-    //
-    // region Public methods
-    //
-
     /**
-     * Returns the app bucket. Null if it wasn't enabled.
+     * We don't support cloning
      *
      * @return
+     * @throws CloneNotSupportedException
      */
-    public Bucket getAppBucket() {
-        return bucketsManager.appBucket;
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        throw new CloneNotSupportedException();
+    }
+
+    //
+    // endregion Singleton pattern
+    //
+    
+    //
+    // region 'Library' methods. Not for external use
+    //
+
+    /**
+     * Registers the given fragment. if this is a register after a configuration change,
+     * the old bucket instance is injected in the fragment.
+     *
+     * @param fragment
+     * @param isRetainedFragment
+     */
+    static void registerFragment(android.support.v4.app.Fragment fragment, boolean isRetainedFragment) {
+        // Choose the right bucket manager
+        if (isRetainedFragment) {
+            INSTANCE.fragActivityBucketManager.registerFragment(fragment);
+        } else {
+            INSTANCE.supportFragBucketManager.registerFragment(fragment);
+        }
     }
 
     /**
-     * Returns the bucket for the given activity.
-     * Null if the activity is not registered.
+     * Unregisters the fragment. Retains the bucket if this is called because of a configuration change.
+     *
+     * @param fragment
+     * @param isRetainedFragment
+     */
+    static void unregisterFragment(android.support.v4.app.Fragment fragment, boolean isRetainedFragment) {
+        if (isRetainedFragment) {
+            INSTANCE.fragActivityBucketManager.unregisterFragment(fragment);
+        } else {
+            INSTANCE.supportFragBucketManager.unregisterFragment(fragment);
+        }
+    }
+    
+    //
+    // endregion 'Library' methods. Not for external use
+    //
+
+    //
+    // region Public static methods
+    //
+
+    /**
+     * Returns the bucket for the v4 support Fragment
+     *
+     * @param fragment
+     * @return
+     */
+    @SuppressWarnings("unused")
+    public static @NonNull Bucket getBucket(@NonNull android.support.v4.app.Fragment fragment) {
+        return INSTANCE.supportFragBucketManager.getBucket(fragment);
+    }
+
+    /**
+     * Returns the bucket for the v4 support FragmentActivity
      *
      * @param activity
      * @return
      */
-    public Bucket getBucket(Activity activity) {
-        return bucketsManager.binder.getBucket(activity);
+    @SuppressWarnings("unused")
+    public static @NonNull Bucket getBucket(@NonNull  android.support.v4.app.FragmentActivity activity) {
+        return INSTANCE.fragActivityBucketManager.getBucket(activity);
     }
-
+    
     //
-    // endregion Public methods
-    //
-
-    //
-    // region Inner classes
-    //
-
-    /**
-     * The builder class
-     */
-    public static class Builder {
-
-        //
-        // region Class fields
-        //
-        
-        // The Application
-        private Application app;
-
-        // Should we auto-discover the Activities that need the retainer, by scanning for the appropriate annotation?
-        // The default value is false
-        private boolean autoDiscoverActivities;
-
-        // Should we inject the bucket in the Activity, by scanning for the Inject annotation?
-        // The default is false
-        private boolean bucketInjection;
-
-        // Should we auto register the data handlers, by scanning for the appropriate annotations?
-        // Default = false
-        private boolean autoRegisterHandlers;
-
-        // Should we initialize an app wide bucket?
-        // Default = false
-        private boolean appBucket;
-
-        // The set of the registered activities
-        // Ignored if auto discovery is enabled!
-        private final Set<Class<? extends Activity>> activities = new HashSet<>();
-        
-        //
-        // endregion Class fields
-        //
-
-        /**
-         * The only constructor
-         *
-         * @param app
-         */
-        @SuppressWarnings("unused")
-        public Builder(Application app) {
-            this.app = app;
-        }
-
-        /**
-         * Should we auto-discover the Activities that need the retainer, by scanning for the appropriate annotation?
-         *
-         * @return
-         */
-        @SuppressWarnings("unused")
-        public Builder enableActivityAutoDiscovery() {
-            this.autoDiscoverActivities = true;
-            return this;
-        }
-
-        /**
-         * Should we inject the bucket in the Activity, by scanning for the Inject annotation?
-         *
-         * @return
-         */
-        @SuppressWarnings("unused")
-        public Builder enableBucketInjection() {
-            this.bucketInjection = true;
-            return this;
-        }
-
-        /**
-         * Should we auto register the data handlers, by scanning for the appropriate annotations?
-         *
-         * @return
-         */
-        @SuppressWarnings("unused")
-        public Builder enableHandlersAutoRegistration() {
-            this.autoRegisterHandlers = true;
-            return this;
-        }
-
-        /**
-         * Should we create an app wide bucket?
-         * Use it if you want to have a single Bucket shared across the application.
-         *
-         * @return
-         */
-        @SuppressWarnings("unused")
-        public Builder enableAppBucket() {
-            this.appBucket = true;
-            return this;
-        }
-
-        /**
-         * Registers the given activity for retention.
-         * This call is ignored if the Activity Auto Discovery is enabled.
-         *
-         * @param activityClass
-         * @return
-         */
-        @SuppressWarnings("unused")
-        public Builder registerActivity(Class<? extends Activity> activityClass) {
-            activities.add(activityClass);
-            return this;
-        }
-
-        /**
-         * Does the actual build
-         *
-         * @return
-         */
-        @SuppressWarnings("unused")
-        public Retainer build() {
-            return new Retainer(this);
-        }
-    }
-
-    //
-    // endregion Inner classes
+    // endregion Public static methods
     //
 }

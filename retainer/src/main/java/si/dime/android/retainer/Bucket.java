@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.transform.Transformer;
-
 import rx.Observable;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
@@ -207,6 +205,13 @@ public class Bucket {
      * Destroys the bucket
      */
     public void destroy() {
+        // Call the destroyers
+        for (DataHandler handler : handlers.values()) {
+            if (handler.destroyer != null) {
+                handler.destroyer.destroy();
+            }
+        }
+
         // Clear the handlers
         onOwnerDestroyed();
 
@@ -386,8 +391,8 @@ public class Bucket {
 
         // Do the actual subscribing
         dataHandler.observable
-                .observeOn(Schedulers.io())
-                .subscribeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
     }
 
@@ -405,6 +410,7 @@ public class Bucket {
     public static class DataHandler {
         public final Observable observable;
         public final Subscriber subscriber;
+        public final Destroyer destroyer;
 
         /**
          * Default constructor
@@ -412,10 +418,15 @@ public class Bucket {
          * @param observable
          * @param subscriber
          */
-        public DataHandler(Observable observable, Subscriber subscriber) {
+        public DataHandler(Observable observable, Subscriber subscriber, Destroyer destroyer) {
             this.observable = observable;
             this.subscriber = subscriber;
+            this.destroyer = destroyer;
         }
+    }
+
+    public interface Destroyer {
+        void destroy();
     }
 
     //
