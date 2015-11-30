@@ -16,6 +16,7 @@ import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
+import si.dime.android.retainer.handlers.DataHandler;
 import si.dime.android.retainer.handlers.RxHandler;
 
 /**
@@ -38,7 +39,7 @@ public class Bucket {
     private final Map<String, Subscriber> subscriptions = new HashMap<>();
 
     // The <Key, Handler> map
-    private final Map<String, RxHandler> handlers = new HashMap<>();
+    private final Map<String, DataHandler> handlers = new HashMap<>();
 
     // The actual data <Key, List>
     private final Map<String, List> data = new HashMap<>();
@@ -65,7 +66,7 @@ public class Bucket {
      * @param key
      * @param dataHandler
      */
-    public void registerDataHandler(String key, RxHandler dataHandler) {
+    public void registerDataHandler(String key, DataHandler dataHandler) {
         // Check if the key already exists
         if (handlers.containsKey(key)) {
             return;
@@ -278,7 +279,7 @@ public class Bucket {
      */
     private boolean requestData(String key, boolean forceRefresh, boolean runImmediately) {
         // Get the handler
-        final RxHandler dataHandler = handlers.get(key);
+        final DataHandler dataHandler = handlers.get(key);
 
         // Check if the key is registered
         if (dataHandler == null) {
@@ -296,10 +297,10 @@ public class Bucket {
                     public void run() {
                         // Emit the elements to the subscriber
                         for (Object obj : successData) {
-                            dataHandler.observer.onNext(obj);
+                            dataHandler.getObserver().onNext(obj);
                         }
                         // Finish the emission
-                        dataHandler.observer.onCompleted();
+                        dataHandler.getObserver().onCompleted();
                     }
                 };
 
@@ -322,7 +323,7 @@ public class Bucket {
                     @Override
                     public void run() {
                         // Emit the error
-                        dataHandler.observer.onError(error);
+                        dataHandler.getObserver().onError(error);
                     }
                 };
 
@@ -348,7 +349,7 @@ public class Bucket {
     /**
      * Makes the initial subscription to the observable from the
      */
-    private void subscribeObservable(final String key, final RxHandler dataHandler) {
+    private void subscribeObservable(final String key, final DataHandler dataHandler) {
         // Initialize the data list holder
         final List dataList = new ArrayList();
         // Register the key
@@ -365,9 +366,9 @@ public class Bucket {
                 compositeSubscription.remove(this);
 
                 // Inform the actual subscriber (if any)
-                RxHandler theHandler = handlers.get(key);
+                DataHandler theHandler = handlers.get(key);
                 if (theHandler != null) {
-                    theHandler.observer.onCompleted();
+                    theHandler.getObserver().onCompleted();
                 }
             }
 
@@ -383,9 +384,9 @@ public class Bucket {
                 errors.put(key, e);
 
                 // Inform the actual subscriber (if any)
-                RxHandler theHandler = handlers.get(key);
+                DataHandler theHandler = handlers.get(key);
                 if (theHandler != null) {
-                    theHandler.observer.onError(e);
+                    theHandler.getObserver().onError(e);
                 }
             }
 
@@ -395,9 +396,9 @@ public class Bucket {
                 dataList.add(o);
 
                 // Inform the actual subscriber (if any)
-                RxHandler theHandler = handlers.get(key);
+                DataHandler theHandler = handlers.get(key);
                 if (theHandler != null) {
-                    theHandler.observer.onNext(o);
+                    theHandler.getObserver().onNext(o);
                 }
             }
         };
@@ -407,7 +408,7 @@ public class Bucket {
         compositeSubscription.add(subscriber);
 
         // Do the actual subscribing
-        dataHandler.observable
+        dataHandler.getObservable()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
@@ -421,21 +422,21 @@ public class Bucket {
      */
     private void destroyHandler(@NonNull String key) {
         // Get the handler
-        RxHandler handler = handlers.get(key);
+        DataHandler handler = handlers.get(key);
         // Get the data
         List items = data.get(key);
 
         // Sanity check
-        if (handler == null || handler.destroyer == null || items == null) {
+        if (handler == null || handler.hasDestroyer() || items == null) {
             return;
         }
 
         // Call destroy for all items
         for (Object obj : items) {
-            handler.destroyer.destroy(obj);
+            handler.getDestroyer().destroy(obj);
         }
         // And finally call destroyCompleted
-        handler.destroyer.destroyCompleted();
+        handler.getDestroyer().destroyCompleted();
     }
 
     //

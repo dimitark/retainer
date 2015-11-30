@@ -11,20 +11,20 @@ import rx.Observer;
  *
  * Created by dime on 30/11/15.
  */
-public class RxHandler {
+public class RxHandler implements DataHandler {
 
     //
     // region Class fields
     //
 
     // The observable
-    public final Observable observable;
+    private final Observable observable;
 
     // The observer
-    public final Observer observer;
+    private final Observer observer;
 
     // The destroyer
-    public final Destroyer destroyer;
+    private final Destroyer destroyer;
 
     //
     // endregion Class fields
@@ -60,31 +60,36 @@ public class RxHandler {
     //
     // endregion Constructors
     //
-
-
+    
     //
-    // region Interface definitions
+    // region DataHandler implementation
     //
 
-    /**
-     * The destroyer class. Called when the data needs to be destroyed.
-     */
-    public interface Destroyer<T> {
-        /**
-         * Called when the given object needs to be destroyed
-         *
-         * @param o
-         */
-        void destroy(T o);
-
-        /**
-         * Called when all of the objects have been destroyed
-         */
-        void destroyCompleted();
+    @NonNull
+    @Override
+    public Observable getObservable() {
+        return observable;
     }
 
+    @NonNull
+    @Override
+    public Observer getObserver() {
+        return observer;
+    }
+
+    @Nullable
+    @Override
+    public Destroyer getDestroyer() {
+        return destroyer;
+    }
+
+    @Override
+    public boolean hasDestroyer() {
+        return destroyer != null;
+    }
+    
     //
-    // endregion Interface definitions
+    // endregion DataHandler implementation
     //
 
 }
