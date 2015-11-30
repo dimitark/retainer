@@ -1,6 +1,8 @@
 package si.dime.android.retainer.managers;
 
-import android.support.v4.app.Fragment;
+import android.annotation.TargetApi;
+import android.app.Fragment;
+import android.os.Build;
 import android.util.SparseArray;
 
 import java.util.HashMap;
@@ -8,12 +10,14 @@ import java.util.Map;
 
 import si.dime.android.retainer.Bucket;
 import si.dime.android.retainer.BucketManager;
+import si.dime.android.retainer.FragmentHolder;
 import si.dime.android.retainer.SupportFragmentHolder;
 
 /**
  * Created by dime on 29/11/15.
  */
-public class SupportFragBucketManager implements BucketManager<Fragment, SupportFragmentHolder> {
+@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
+public class FragmentBucketManager implements BucketManager<Fragment, FragmentHolder> {
     //
     // region Class fields
     //
@@ -52,7 +56,7 @@ public class SupportFragBucketManager implements BucketManager<Fragment, Support
         // If there isn't, that means this is the first call,
         // and we need to create the fragment that holds the bucket,
         // add it to the fragment manager so it can register itself
-        SupportFragmentHolder fragmentHolder = SupportFragmentHolder.newInstance(false);
+        FragmentHolder fragmentHolder = FragmentHolder.newInstance(false);
         parent.getChildFragmentManager()
                 .beginTransaction()
                 .add(fragmentHolder, BucketManager.HOLDER_FRAGMENT_TAG)
@@ -71,7 +75,7 @@ public class SupportFragBucketManager implements BucketManager<Fragment, Support
     }
 
     @Override
-    public void registerFragment(SupportFragmentHolder fragment) {
+    public void registerFragment(FragmentHolder fragment) {
         // Check if we have an existing bucket for this fragment.
         // This is true only when the system recreates the fragment
         // because of a configuration change
@@ -95,7 +99,7 @@ public class SupportFragBucketManager implements BucketManager<Fragment, Support
     }
 
     @Override
-    public void unregisterFragment(SupportFragmentHolder fragment) {
+    public void unregisterFragment(FragmentHolder fragment) {
         // Check why this fragment is unregistering.
         // Is it because of a configuration change?
         if (fragment.getActivity().isChangingConfigurations()) {

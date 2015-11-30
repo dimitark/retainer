@@ -2,6 +2,7 @@ package si.dime.android.retainer;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
+import si.dime.android.retainer.handlers.RxHandler;
 
 /**
  * A bucket holding data.
@@ -36,7 +38,7 @@ public class Bucket {
     private final Map<String, Subscriber> subscriptions = new HashMap<>();
 
     // The <Key, Handler> map
-    private final Map<String, DataHandler> handlers = new HashMap<>();
+    private final Map<String, RxHandler> handlers = new HashMap<>();
 
     // The actual data <Key, List>
     private final Map<String, List> data = new HashMap<>();
@@ -63,7 +65,7 @@ public class Bucket {
      * @param key
      * @param dataHandler
      */
-    public void registerDataHandler(String key, DataHandler dataHandler) {
+    public void registerDataHandler(String key, RxHandler dataHandler) {
         // Check if the key already exists
         if (handlers.containsKey(key)) {
             return;
@@ -90,6 +92,19 @@ public class Bucket {
     public boolean isRunning(String key) {
         return running.contains(key);
     }
+
+
+    /**
+     * Returns true if local data or local error already exist for the given key.
+     *
+     * @param key
+     * @return
+     */
+    public boolean dataExists(String key) {
+        return data.containsKey(key) || errors.containsKey(key);
+    }
+
+
 
 
     /**
@@ -151,8 +166,16 @@ public class Bucket {
             return;
         }
 
-        // Get the subscriber and unsubscribe
-        subscriptions.get(key).unsubscribe(); // Cannot be null at this moment
+        // Get the subscriber
+        Subscriber subscriber = subscriptions.get(key); // Cannot be null at this moment
+
+        // Unsubscribe
+        subscriber.unsubscribe();
+
+        // Remove the subscription
+        subscriptions.remove(key);
+        compositeSubscription.remove(subscriber);
+
         // Mark it as not-running
         running.remove(key);
     }
@@ -163,6 +186,12 @@ public class Bucket {
      * @param key
      */
     public void removeData(String key) {
+        // Cancel the running request
+        cancelRequest(key);
+
+        // Let the user destroy the items
+        destroyHandler(key);
+
         // Remove any existing data
         data.remove(key);
         errors.remove(key);
@@ -174,9 +203,6 @@ public class Bucket {
      * @param key
      */
     public void unregisterKey(String key) {
-        // Cancel if running
-        cancelRequest(key);
-
         // Remove the data
         removeData(key);
 
@@ -206,10 +232,8 @@ public class Bucket {
      */
     public void destroy() {
         // Call the destroyers
-        for (DataHandler handler : handlers.values()) {
-            if (handler.destroyer != null) {
-                handler.destroyer.destroy();
-            }
+        for (String key : handlers.keySet()) {
+            destroyHandler(key);
         }
 
         // Clear the handlers
@@ -254,7 +278,7 @@ public class Bucket {
      */
     private boolean requestData(String key, boolean forceRefresh, boolean runImmediately) {
         // Get the handler
-        final DataHandler dataHandler = handlers.get(key);
+        final RxHandler dataHandler = handlers.get(key);
 
         // Check if the key is registered
         if (dataHandler == null) {
@@ -272,10 +296,10 @@ public class Bucket {
                     public void run() {
                         // Emit the elements to the subscriber
                         for (Object obj : successData) {
-                            dataHandler.subscriber.onNext(obj);
+                            dataHandler.observer.onNext(obj);
                         }
                         // Finish the emission
-                        dataHandler.subscriber.onCompleted();
+                        dataHandler.observer.onCompleted();
                     }
                 };
 
@@ -298,7 +322,7 @@ public class Bucket {
                     @Override
                     public void run() {
                         // Emit the error
-                        dataHandler.subscriber.onError(error);
+                        dataHandler.observer.onError(error);
                     }
                 };
 
@@ -313,16 +337,7 @@ public class Bucket {
                 return true;
             }
         } else {
-            // If we have forceRefresh - we need to clear the existing data
-            running.remove(key);
-            data.remove(key);
-            errors.remove(key);
-
-            // Cancel the previous running observable - if any
-            Subscriber subscriber = subscriptions.get(key);
-            if (subscriber != null) {
-                subscriber.unsubscribe();
-            }
+            removeData(key);
         }
 
         // Subscribe to the observable
@@ -333,7 +348,7 @@ public class Bucket {
     /**
      * Makes the initial subscription to the observable from the
      */
-    private void subscribeObservable(final String key, final DataHandler dataHandler) {
+    private void subscribeObservable(final String key, final RxHandler dataHandler) {
         // Initialize the data list holder
         final List dataList = new ArrayList();
         // Register the key
@@ -347,11 +362,12 @@ public class Bucket {
                 // Mark the key as completed
                 running.remove(key);
                 subscriptions.remove(key);
+                compositeSubscription.remove(this);
 
                 // Inform the actual subscriber (if any)
-                DataHandler theHandler = handlers.get(key);
+                RxHandler theHandler = handlers.get(key);
                 if (theHandler != null) {
-                    theHandler.subscriber.onCompleted();
+                    theHandler.observer.onCompleted();
                 }
             }
 
@@ -360,15 +376,16 @@ public class Bucket {
                 // Mark the key as completed
                 running.remove(key);
                 subscriptions.remove(key);
+                compositeSubscription.remove(this);
 
                 // Save the throwable
                 data.remove(key);
                 errors.put(key, e);
 
                 // Inform the actual subscriber (if any)
-                DataHandler theHandler = handlers.get(key);
+                RxHandler theHandler = handlers.get(key);
                 if (theHandler != null) {
-                    theHandler.subscriber.onError(e);
+                    theHandler.observer.onError(e);
                 }
             }
 
@@ -378,9 +395,9 @@ public class Bucket {
                 dataList.add(o);
 
                 // Inform the actual subscriber (if any)
-                DataHandler theHandler = handlers.get(key);
+                RxHandler theHandler = handlers.get(key);
                 if (theHandler != null) {
-                    theHandler.subscriber.onNext(o);
+                    theHandler.observer.onNext(o);
                 }
             }
         };
@@ -396,40 +413,32 @@ public class Bucket {
                 .subscribe(subscriber);
     }
 
-    //
-    // endregion Private methods
-    //
-    
-    //
-    // region Inner classes
-    //
 
     /**
-     * A holder for the observable and the subscriber
+     * Calls destroy on all data items for the given key.
+     *
+     * @param key
      */
-    public static class DataHandler {
-        public final Observable observable;
-        public final Subscriber subscriber;
-        public final Destroyer destroyer;
+    private void destroyHandler(@NonNull String key) {
+        // Get the handler
+        RxHandler handler = handlers.get(key);
+        // Get the data
+        List items = data.get(key);
 
-        /**
-         * Default constructor
-         *
-         * @param observable
-         * @param subscriber
-         */
-        public DataHandler(Observable observable, Subscriber subscriber, Destroyer destroyer) {
-            this.observable = observable;
-            this.subscriber = subscriber;
-            this.destroyer = destroyer;
+        // Sanity check
+        if (handler == null || handler.destroyer == null || items == null) {
+            return;
         }
-    }
 
-    public interface Destroyer {
-        void destroy();
+        // Call destroy for all items
+        for (Object obj : items) {
+            handler.destroyer.destroy(obj);
+        }
+        // And finally call destroyCompleted
+        handler.destroyer.destroyCompleted();
     }
 
     //
-    // endregion Inner classes
+    // endregion Private methods
     //
 }

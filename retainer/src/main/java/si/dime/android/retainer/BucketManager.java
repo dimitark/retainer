@@ -17,13 +17,6 @@ public interface BucketManager<ParentType, HolderFragmentType> {
      */
     Bucket getBucket(ParentType parent);
 
-//    /**
-//     * Registers the ParentType as a bucket holder
-//     *
-//     * @param parent
-//     */
-//    void register(ParentType parent);
-
     /**
      * Registers the given fragment. If this is a register after a configuration change,
      * the old bucket instance is injected in the fragment.
