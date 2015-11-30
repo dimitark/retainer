@@ -152,23 +152,23 @@ public class TaskHandler implements DataHandler {
          * If an unhandled exception occurs in the doInBackground - this method is not called.
          * Instead the onError method is called.
          *
-         * @param data
+         * @param t
          */
-        void onPostExecute(T data);
+        void onPostExecute(T t);
 
         /**
          * Called if an unhandled exception occurs in the doInBackground method.
          *
-         * @param t
+         * @param e
          */
-        void onError(Throwable t);
+        void onError(Throwable e);
 
         /**
          * Called before the user clears the reference to the given data object
          *
-         * @param data
+         * @param t
          */
-        void destroy(T data);
+        void destroy(T t);
     }
 
     //

@@ -18,6 +18,7 @@ import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 import si.dime.android.retainer.handlers.DataHandler;
 import si.dime.android.retainer.handlers.RxHandler;
+import si.dime.android.retainer.handlers.TaskHandler;
 
 /**
  * A bucket holding data.
@@ -60,13 +61,13 @@ public class Bucket {
     //
 
     /**
-     * Registers the given data handler with the given key.
-     * Does nothing if there is a handler already registered for the given key.
+     * Registers the given Rx handler handler with the given key.
+     * Does nothing if there is a handler or a task already registered for the given key.
      *
      * @param key
      * @param dataHandler
      */
-    public void registerDataHandler(String key, DataHandler dataHandler) {
+    public void registerRxHandler(String key, RxHandler dataHandler) {
         // Check if the key already exists
         if (handlers.containsKey(key)) {
             return;
@@ -74,6 +75,23 @@ public class Bucket {
 
         // Just register the data handler
         handlers.put(key, dataHandler);
+    }
+
+    /**
+     * Registers the given task with the given key.
+     * Does nothing if there is a task or a handler already registered for the given key.
+     *
+     * @param key
+     * @param task
+     */
+    public void registerTask(String key, TaskHandler.Task task) {
+        // Check if the key already exists
+        if (handlers.containsKey(key)) {
+            return;
+        }
+
+        // Just register it
+        handlers.put(key, new TaskHandler(task));
     }
     
     //

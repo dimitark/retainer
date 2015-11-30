@@ -9,9 +9,9 @@ public interface Destroyer<T> {
     /**
      * Called when the given object needs to be destroyed
      *
-     * @param o
+     * @param t
      */
-    void destroy(T o);
+    void destroy(T t);
 
     /**
      * Called when all of the objects have been destroyed
