@@ -18,6 +18,7 @@ import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 import si.dime.android.retainer.handlers.DataHandler;
 import si.dime.android.retainer.handlers.RxHandler;
+import si.dime.android.retainer.handlers.Task;
 import si.dime.android.retainer.handlers.TaskHandler;
 
 /**
@@ -84,7 +85,7 @@ public class Bucket {
      * @param key
      * @param task
      */
-    public void registerTask(String key, TaskHandler.Task task) {
+    public void registerTask(String key, Task task) {
         // Check if the key already exists
         if (handlers.containsKey(key)) {
             return;
