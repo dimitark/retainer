@@ -1,6 +1,6 @@
 # Retainer
 
-An Android library that retains the data on orientation change, and destroys it when the activity/fragment is actually destroyed and not needed anymore.
+An Android library that retains the data on configuration change, and destroys it when the activity/fragment is actually destroyed and not needed anymore.
 
 ## Gradle
 
@@ -162,7 +162,7 @@ boolean isCachedDataAvailable = bucket.requestData("user_details_task");
 // If not - a new request will be made, and the subscriber/onPostExecute() 
 // will be called once the observable calls onComplete() or onError() / the doInBackground() finishes.
 
-boolean isCachedDataAvailable = bucket.requestImmediateData("user_details_task");
+boolean isCachedDataAvailable = bucket.requestImmediateData("rx_handler");
 
 ```
 
