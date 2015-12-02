@@ -43,7 +43,7 @@ The only limitation this library has, is that a *Bucket* that is bound to a non-
 
 ### DataHandlers
 
-There are two types of DataHandlers. An **Task**, which aims to replace the **AsyncTask** and an **RxHandler** which lets you use RxJava for working with the data. 
+There are two types of DataHandlers. A **Task**, which aims to replace the **AsyncTask** and an **RxHandler** which lets you use RxJava for working with the data.
 
 #### Task
 
