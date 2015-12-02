@@ -89,7 +89,7 @@ bucket.registerTask("user_details_task", userDetailsTask);
 
 #### RxHandler
 
-The **RxHandler** lets you use **RxJava**. 
+The **RxHandler** lets you use **RxJava**. The Observable is executed on a background thread. The Observer is called in the UI thread.  
 
 ```Java
 
