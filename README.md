@@ -4,24 +4,9 @@ An Android library that retains the data on configuration change, and destroys i
 
 ## Gradle
 
-To include the library in your project, you first need to add the maven repository in you build.gradle file which is located **in the root directory** of your project.
+To include the library in your project, define it as a dependency in your application's build.gradle file.
 
-It should look something like:
-
-```
-allprojects {
-    repositories {
-        jcenter()
-        maven {
-            url  "http://dl.bintray.com/dimitark/maven"
-        }
-    }
-}
-```
-
-After that you need to include the library as a dependency in the build.gradle file in your **application subdirectory**.
-
-```
+```Groovy
 compile 'si.dime.android:retainer:0.1.0'
 ```
 
