@@ -1,6 +1,6 @@
 # Retainer
 
-An Android library that retains the data on configuration change, and destroys it when the activity/fragment is actually destroyed and not needed anymore.
+An Android library that retains the data on configuration change, and destroys it only when the activity/fragment is actually destroyed and not needed anymore.
 
 ## Gradle
 
@@ -17,7 +17,8 @@ compile 'si.dime.android:retainer:0.1.0'
 
 The library's main component is the **Bucket**. A bucket is bound to the lifecycle of a single Activity or Fragment.
 It is created only and when the user requests one, for a specific Activity/Fragment. It can be done by calling
-the static **getBucket(...)** method of the Retainer class, and passing a reference of an Activity or a Fragment. The Bucket is destoyed when it's parent Activity/Fragment is destroyed. 
+the static **getBucket(...)** method of the Retainer class, and passing a reference of an Activity or a Fragment. 
+On configuration change, the Bucket is re-attached to the newly created Activity/Fragment. 
 
 The only limitation this library has, is that a *Bucket* that is bound to a non-retained Fragment's lifecycle, **can be used only from the onCreateView(...) method of the Fragment's lifecycle on.** If the fragment is retained - a Bucket can be requested anytime.
 
@@ -159,6 +160,107 @@ boolean isCachedDataAvailable = bucket.requestImmediateData("rx_handler");
 // If there is a running observable/doInBackground() - it will be canceled.
 
 bucket.requestRefreshedData("user_details_task");
+
+```
+
+#### Example
+
+Below is a simple example of how the library can be used in a real situation
+
+```Java
+
+public class MainActivity extends AppCompatActivity {
+    //
+    // region Static fields
+    //
+
+    private static final String USER_DETAILS_TASK = "user_details_task";
+
+    //
+    // endregion Static fields
+    //
+
+    //
+    // region Class fields
+    //
+
+    private TextView userTextView;
+    private Bucket bucket;
+
+    //
+    // endregion Class fields
+    //
+
+    //
+    // region Tasks
+    //
+
+    // Define the Task data handler
+    private final Task<User> userDetailsTask = new Task<User>() {
+        @Override
+        public User doInBackground() {
+            // Fetch the user data from our web service
+            return myRestService.getUserDetails();
+        }
+
+        @Override
+        public void onPostExecute(User user) {
+            // Display the name of the user
+            userTextView.setText(user.getName());
+            // Hide the loading screen
+            hideLoading();
+        }
+
+        @Override
+        public void onError(Throwable t) {
+            // Display the error to the user
+            // ...
+            
+            // Hide the loading screen
+            hideLoading();
+        }
+
+        @Override
+        public void destroy(User user) {
+            // Logout the user
+            user.logout();
+        }
+    };
+
+
+    //
+    // endregion Tasks
+    //
+
+    //
+    // region Lifecycle
+    //
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        // Get the Bucket
+        bucket = Retainer.getBucket(this);
+
+        // Get the UI components
+        userTextView = (TextView) findViewById(R.id.userTextView);
+
+        // Register the task
+        bucket.registerTask(USER_DETAILS_TASK, userDetailsTask);
+
+        // Request the data, and show loading if needed
+        if (bucket.requestData(USER_DETAILS_TASK)) {
+            showLoading();
+        }
+    }
+
+    //
+    // endregion Lifecycle
+    //
+}
+
 
 ```
 
