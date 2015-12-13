@@ -251,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
         bucket.registerTask(USER_DETAILS_TASK, userDetailsTask);
 
         // Request the data, and show loading if needed
-        if (bucket.requestData(USER_DETAILS_TASK)) {
+        if (!bucket.requestData(USER_DETAILS_TASK)) {
             showLoading();
         }
     }
