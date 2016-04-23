@@ -1,12 +1,8 @@
 package si.dime.android.retainer.testapp.appcompatactivity;
 
 import android.app.Activity;
-import android.app.Instrumentation;
-import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.support.test.InstrumentationRegistry;
-import android.support.test.annotation.UiThreadTest;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.IdlingResource;
 import android.support.test.espresso.core.deps.guava.collect.Iterables;
@@ -16,7 +12,6 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
 import android.support.test.runner.lifecycle.Stage;
-import android.test.InstrumentationTestCase;
 
 import org.junit.After;
 import org.junit.Before;
@@ -29,13 +24,14 @@ import java.util.Collection;
 import si.dime.android.retainer.testapp.R;
 import si.dime.android.retainer.testapp.SimpleTaskActivity;
 
-import static android.support.test.espresso.Espresso.*;
-import static android.support.test.espresso.action.ViewActions.*;
-import static android.support.test.espresso.action.ViewActions.pressBack;
-import static android.support.test.espresso.matcher.ViewMatchers.*;
-import static si.dime.android.retainer.testapp.OrientationChangeAction.*;
-
-import static org.junit.Assert.*;
+import static android.support.test.espresso.Espresso.onView;
+import static android.support.test.espresso.action.ViewActions.click;
+import static android.support.test.espresso.matcher.ViewMatchers.isRoot;
+import static android.support.test.espresso.matcher.ViewMatchers.withId;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static si.dime.android.retainer.testapp.OrientationChangeAction.orientationLandscape;
+import static si.dime.android.retainer.testapp.OrientationChangeAction.orientationPortrait;
 
 /**
  * Created by dime on 22/04/16.
