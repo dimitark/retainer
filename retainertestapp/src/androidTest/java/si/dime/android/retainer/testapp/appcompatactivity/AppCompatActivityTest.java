@@ -65,7 +65,7 @@ public class AppCompatActivityTest {
         SimpleTaskActivity activity = activityRule.getActivity();
 
         // The simple task's result
-        String mainData = null;
+        String mainData;
 
         // In the beginning the data should be null
         assertEquals(null, activity.getData());
