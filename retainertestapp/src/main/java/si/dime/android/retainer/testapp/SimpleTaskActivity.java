@@ -27,7 +27,7 @@ public class SimpleTaskActivity extends AppCompatActivity {
             // Set the loading flag
             simpleTaskIsLoading = true;
             // Wait for 5 seconds to simulate a network call
-            try { Thread.sleep(5000); } catch (InterruptedException e) {}
+            try { Thread.sleep(1000); } catch (InterruptedException e) {}
             // Return the string
             return "Simple test task";
         }

@@ -72,12 +72,12 @@ public class AppCompatActivityTest {
         String mainData = null;
 
         // In the beginning the data should be null
-        assertEquals(activity.getData(), mainData);
+        assertEquals(null, activity.getData());
 
         // After the click on the "Simple task button" the data should be not be null
         onView(ViewMatchers.withId(R.id.simple_task_button)).perform(click());
         mainData = activity.getData();
-        assertNotEquals(mainData, null);
+        assertNotEquals(null, mainData);
 
         // After the second task request, the bucket should return the same (cached) string
         onView(withId(R.id.simple_task_button)).perform(click());
@@ -92,8 +92,8 @@ public class AppCompatActivityTest {
         activity = (SimpleTaskActivity) getCurrentActivity();
 
         // Make sure that the previous activity was "replaced"
-        assertNotEquals(activity, activityRule.getActivity());
-        assertEquals(activity.getData(), null);
+        assertNotEquals(activityRule.getActivity(), activity);
+        assertEquals(null, activity.getData());
 
         // Make the request one last time
         onView(withId(R.id.simple_task_button)).perform(click());
