@@ -22,11 +22,10 @@
  * SOFTWARE.
  * 
  */
-package si.dime.android.retainer.testapp;
+package si.dime.android.retainer.testapp.common;
 
 import android.app.Activity;
 import android.content.pm.ActivityInfo;
-import android.os.SystemClock;
 import android.support.test.espresso.UiController;
 import android.support.test.espresso.ViewAction;
 import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;

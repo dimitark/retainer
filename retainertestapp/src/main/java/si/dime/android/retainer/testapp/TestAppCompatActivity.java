@@ -10,7 +10,7 @@ import si.dime.android.retainer.Bucket;
 import si.dime.android.retainer.Retainer;
 import si.dime.android.retainer.handlers.Task;
 
-public class SimpleTaskActivity extends AppCompatActivity {
+public class TestAppCompatActivity extends AppCompatActivity implements LoadingIndicator, DataActivity<String> {
     // The UI components
     private Button simpleTaskButton;
 
@@ -26,8 +26,6 @@ public class SimpleTaskActivity extends AppCompatActivity {
         public String doInBackground() {
             // Set the loading flag
             simpleTaskIsLoading = true;
-            // Wait for 5 seconds to simulate a network call
-            try { Thread.sleep(1000); } catch (InterruptedException e) {}
             // Return the string
             return "Simple test task";
         }
@@ -55,6 +53,7 @@ public class SimpleTaskActivity extends AppCompatActivity {
      *
      * @return
      */
+    @Override
     public String getData() {
         return data;
     }
@@ -78,5 +77,10 @@ public class SimpleTaskActivity extends AppCompatActivity {
                 bucket.requestData("simple_task");
             }
         });
+    }
+
+    @Override
+    public boolean isDataLoading() {
+        return simpleTaskIsLoading;
     }
 }

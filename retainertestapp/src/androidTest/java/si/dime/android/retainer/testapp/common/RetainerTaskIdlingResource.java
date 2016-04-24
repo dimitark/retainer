@@ -1,30 +1,30 @@
-package si.dime.android.retainer.testapp.appcompatactivity;
+package si.dime.android.retainer.testapp.common;
 
 import android.support.test.espresso.IdlingResource;
 
-import si.dime.android.retainer.testapp.SimpleTaskActivity;
+import si.dime.android.retainer.testapp.LoadingIndicator;
 
 /**
  * Created by dime on 22/04/16.
  */
-public class SimpleTaskIdlingResource implements IdlingResource {
+public class RetainerTaskIdlingResource implements IdlingResource {
 
     // The activity
-    private SimpleTaskActivity simpleTaskActivity;
+    private LoadingIndicator loadingIndicator;
     private ResourceCallback resourceCallback;
 
     /**
      * Default constructor
      *
-     * @param simpleTaskActivity
+     * @param loadingIndicator
      */
-    public SimpleTaskIdlingResource(SimpleTaskActivity simpleTaskActivity) {
-        this.simpleTaskActivity = simpleTaskActivity;
+    public RetainerTaskIdlingResource(LoadingIndicator loadingIndicator) {
+        this.loadingIndicator = loadingIndicator;
     }
 
     @Override
     public String getName() {
-        return SimpleTaskIdlingResource.class.getName();
+        return RetainerTaskIdlingResource.class.getName();
     }
 
     @Override
@@ -34,7 +34,7 @@ public class SimpleTaskIdlingResource implements IdlingResource {
 
     @Override
     public boolean isIdleNow() {
-        boolean idle = !simpleTaskActivity.simpleTaskIsLoading;
+        boolean idle = !loadingIndicator.isDataLoading();
         resourceCallback.onTransitionToIdle();
         return idle;
     }
