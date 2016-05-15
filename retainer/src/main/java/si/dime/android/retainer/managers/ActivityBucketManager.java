@@ -27,7 +27,14 @@ public class ActivityBucketManager implements BucketManager<Activity, FragmentHo
                     .add(fragmentHolder, BucketManager.HOLDER_FRAGMENT_TAG)
                     .commit();
             parent.getFragmentManager().executePendingTransactions();
+        }
 
+        // Check if the fragment holder has a bucket.
+        // There are 2 cases where the fragment may not have a bucket
+        // 1. If we just created a brand new fragment
+        // 2. If the activity was destroyed by the system, because the system needed to free up resources
+        // In both cases - create a brand new bucket
+        if (fragmentHolder.getBucket() == null) {
             // Create a brand new bucket
             Bucket newBucket = new Bucket();
             // Inject it in the newly created fragment holder
