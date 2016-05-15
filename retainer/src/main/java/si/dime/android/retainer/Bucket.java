@@ -5,6 +5,8 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,6 +47,9 @@ public class Bucket {
 
     // The actual data <Key, List>
     private final Map<String, List> data = new HashMap<>();
+
+    // The raw data <Key, Object>
+    private final Map<String, Object> rawData = new HashMap<>();
 
     // The errors <Key, Throwable>
     private final Map<String, Throwable> errors = new HashMap<>();
@@ -124,7 +129,43 @@ public class Bucket {
         return data.containsKey(key) || errors.containsKey(key);
     }
 
+    /**
+     * Returns true if raw data already exists for the given key
+     *
+     * @param key
+     * @return
+     */
+    public boolean rawDataExists(String key) {
+        return rawData.containsKey(key);
+    }
 
+    /**
+     * Puts the given raw data in this bucket and maps it with the given key (Sync)
+     *
+     * @param key
+     * @param data
+     */
+    public void putRawData(String key, Object data) {
+        rawData.put(key, data);
+    }
+
+    /**
+     * Removes any existing raw data for the given key
+     *
+     * @param key
+     */
+    public void removeRawData(String key) {
+        rawData.remove(key);
+    }
+
+    /**
+     * Synchronously retrieves the raw data for the given key.
+     *
+     * @param key
+     */
+    public Object getRawData(String key) {
+        return rawData.get(key);
+    }
 
 
     /**
